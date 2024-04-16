@@ -3,12 +3,12 @@ pipeline {
     stages{
         stage('code'){
             steps{
-                git url: 'https://github.com/Rani2909/CI-CD-jenkins.git', branch: 'main'
+                git url: 'https://github.com/Akila-19/JenkinsFinalExam.git', branch: 'main'
             }
         }
         stage('Build'){
             steps{
-                sh 'docker build . -t -img:latest'
+                docker.build('healthcare:latest')
             }
         }
         stage('Test'){
@@ -17,9 +17,11 @@ pipeline {
             }
         }
         stage('Deploy'){
-            steps{
-                sh "docker run -d --name react-django-docker-jenkins -p 8002:8002 react-django-docker-img:latest"
-            }
+           script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        // Push Docker image to Docker Hub
+                        docker.image('healthcare:latest').push()
+                    }
         }
     }
 }
