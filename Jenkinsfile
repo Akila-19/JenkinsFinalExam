@@ -1,27 +1,34 @@
 pipeline {
-    agent any
-    stages{
-        stage('code'){
-            steps{
-                git url: 'https://github.com/Akila-19/JenkinsFinalExam.git', branch: 'main'
-            }
-        }
-        stage('Build'){
-            steps{
-                docker.build('healthcare:latest')
-            }
-        }
-        stage('Test'){
-            steps{
-                echo "Testing"
-            }
-        }
-        stage('Deploy'){
-           script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        // Push Docker image to Docker Hub
-                        docker.image('healthcare:latest').push()
-                    }
-        }
+  agent any
+ 
+  environment {
+    DOCKER_IMAGE = 'rani2909/myjenkin' // Modify this according to your Docker repository
+  }
+ 
+  stages {
+    stage('Build') {
+      steps {
+        // Build Docker image and tag it
+        sh 'docker build -t finalexam .'
+        sh 'docker tag finalexam $DOCKER_IMAGE'
+      }
     }
+    stage('Deploy') {
+      steps {
+        // Login to Docker registry
+        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+          sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin docker.io"
+          // Push Docker image to registry
+          sh 'docker push $DOCKER_IMAGE'
+        }
+      }
+    }
+  }
+ 
+  post {
+    always {
+      // Logout from Docker registry
+      sh 'docker logout'
+    }
+  }
 }
