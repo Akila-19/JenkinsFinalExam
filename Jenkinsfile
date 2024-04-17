@@ -32,7 +32,7 @@ pipeline {
 
             // Define your EC2 instance details
             def ec2Instance = 'ec2-44-210-122-44.compute-1.amazonaws.com'
-            def ec2Username = 'ubuntu' // or any other username depending on your EC2 instance configuration
+            def ec2Username = 'root' // or any other username depending on your EC2 instance configuration
 
             // Define your Docker image details
             def dockerImage = 'akila1908/healthcarejenkinsapp:latest'
