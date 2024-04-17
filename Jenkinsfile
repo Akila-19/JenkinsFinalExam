@@ -39,7 +39,7 @@ pipeline {
 
                     // Run the SSH command to pull and run the Docker image
                     sshagent(credentials: [sshCredentials]) {
-                        sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${dockerImage} && docker run -d -p 8080:80 ${dockerImage}'"
+                        sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${DOCKER_IMAGE} && docker run -d -p 8080:80 ${DOCKER_IMAGE}'"
                     }
                 }
             }
