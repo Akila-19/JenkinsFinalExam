@@ -2,7 +2,7 @@ pipeline {
   agent any
  
   environment {
-    DOCKER_IMAGE = 'akila1908/healthcareApp' // Modify this according to your Docker repository
+    DOCKER_IMAGE = 'akila1908/healthcarejenkinsapp' // Modify this according to your Docker repository
   }
  
   stages {
