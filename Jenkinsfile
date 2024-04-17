@@ -9,8 +9,9 @@ pipeline {
         stage('Build') {
             steps {
                 // Build Docker image and tag it
-                sh 'docker build -t finalexam .'
-                sh 'docker tag finalexam $DOCKER_IMAGE'
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
         stage('Deploy') {
@@ -39,7 +40,7 @@ pipeline {
 
                     // Run the SSH command to pull and run the Docker image
                     sshagent(credentials: [sshCredentials]) {
-                        sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${DOCKER_IMAGE} && docker run -d -p 8080:80 ${DOCKER_IMAGE}'"
+                        sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${dockerImage} && docker run -d -p 8080:80 ${dockerImage}'"
                     }
                 }
             }
@@ -53,4 +54,3 @@ pipeline {
         }
     }
 }
-
