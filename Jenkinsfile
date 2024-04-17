@@ -3,49 +3,45 @@ pipeline {
     
     environment {
         DOCKER_IMAGE = 'akila1908/healthcarejenkinsapp' // Modify this according to your Docker repository
+        EC2_INSTANCE = 'ec2-52-201-222-132.compute-1.amazonaws.com'
+        EC2_USER = 'ubuntu' // or any other username depending on your EC2 instance configuration
     }
     
     stages {
         stage('Build') {
             steps {
                 // Build Docker image and tag it
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
-                }
+                sh 'docker build -t healthcare-app .'
+                sh 'docker tag healthcare-app $DOCKER_IMAGE'
             }
         }
         stage('Deploy') {
             steps {
-                // Login to Docker registry
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                    sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin docker.io"
-                    // Push Docker image to registry
-                    sh 'docker push $DOCKER_IMAGE'
-                }
-            }
-        }
-        stage('Deploy to EC2') {
-            steps {
-                // Use SSH to connect to your EC2 instance and run the Docker image
+                // Cleanup existing containers
                 script {
-                    // Define the SSH credentials ID configured in Jenkins
-                    def sshCredentials = '07a6bae1-fe74-47c2-9080-02e42194cdbb'
-
-                    // Define your EC2 instance details
-                    def ec2Instance = 'ec2-52-201-222-132.compute-1.amazonaws.com'
-                    def ec2Username = 'ubuntu' // or any other username depending on your EC2 instance configuration
-
-                    // Define your Docker image details
-                    def dockerImage = 'akila1908/healthcarejenkinsapp:latest'
-
-                    // Run the SSH command to pull and run the Docker image
-                    sshagent(credentials: [sshCredentials]) {
-                        sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${dockerImage} && docker run -d -p 8080:80 ${dockerImage}'"
+                    sshagent(credentials: ['07a6bae1-fe74-47c2-9080-02e42194cdbb']) {
+                        try {
+                            ssh "ubuntu@${EC2_INSTANCE} \"docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true\""
+                            ssh "ubuntu@${EC2_INSTANCE} \"docker rm \$(docker ps -aq --filter ancestor=${DOCKER_IMAGE}) || true\""
+                        } catch (Exception e) {
+                            echo "Error cleaning up containers: ${e}"
+                        }
+                    }
+                }
+                // Deploy Docker image to EC2 instance
+                script {
+                    sshagent(credentials: ['07a6bae1-fe74-47c2-9080-02e42194cdbb']) {
+                        try {
+                            ssh "ubuntu@${EC2_INSTANCE} \"docker pull ${DOCKER_IMAGE}\""
+                            ssh "ubuntu@${EC2_INSTANCE} \"docker run -d -p 8081:80 ${DOCKER_IMAGE}\""
+                        } catch (Exception e) {
+                            echo "Error deploying Docker image: ${e}"
+                        }
                     }
                 }
             }
         }
-    } 
+    }
     
     post {
         always {
