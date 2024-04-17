@@ -23,6 +23,28 @@ pipeline {
         }
       }
     }
+    stage('Deploy to EC2') {
+    steps {
+        // Use SSH to connect to your EC2 instance and pull the Docker image
+        script {
+            // Define the SSH credentials ID configured in Jenkins
+            def sshCredentials = '07a6bae1-fe74-47c2-9080-02e42194cdbb'
+
+            // Define your EC2 instance details
+            def ec2Instance = 'ec2-44-210-122-44.compute-1.amazonaws.com'
+            def ec2Username = 'ubuntu' // or any other username depending on your EC2 instance configuration
+
+            // Define your Docker image details
+            def dockerImage = 'akila1908/healthcarejenkinsapp:latest'
+
+            // Run the SSH command to pull the Docker image
+            sshagent(credentials: [sshCredentials]) {
+                sh "ssh ${ec2Username}@${ec2Instance} 'docker pull ${dockerImage}'"
+            }
+        }
+    }
+}
+
   }
  
   post {
